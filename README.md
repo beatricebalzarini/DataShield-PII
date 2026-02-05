@@ -123,4 +123,4 @@ Finally, I analyzed the semantic proximity between the local distribution of inc
 
 This project was developed out of **personal interest** to deepen the understanding of concepts explored during a **University Cybersecurity Course**.
 
-While $k$-anonymity is a foundational concept, this project highlights that **privacy is not a single metric**. Real-world compliance requires a multi-faceted approach ($k, l, t$) to protect against sophisticated attacks while preserving the statistical value of the data for research.
+While $k$-anonymity is a foundational concept, this project highlights that **privacy is not a single metric**. Real-world compliance requires a multi-faceted approach ($k$-Anonimity, $l$-Diversity, $t$-Closeness) to protect against sophisticated attacks while preserving the statistical value of the data for research.
