@@ -104,9 +104,9 @@ Finally, I analyzed the semantic proximity between the local distribution of inc
 1.  **Install Dependencies:**
 
     ```bash
-    pip install pandas seaborn matplotlib numpy
+    pip install -r requirements.txt
     ```
-
+    
 2.  **Run the Orchestrator:**
     This script runs the full analysis, anonymization, and auditing sequence in order.
 
