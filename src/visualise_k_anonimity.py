@@ -4,10 +4,14 @@ import seaborn as sns
 import os
 import sys
 
+# Setup path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from risk_analyser import load_data, analyze_k_anonymity, QUASI_IDENTIFIERS
+try:
+    from risk_analyser import load_data, analyze_k_anonymity, QUASI_IDENTIFIERS
+except ImportError:
+    sys.exit("Error: risk_analyser.py not found.")
 
 # --- TRANSFORMATION LOGIC ---
 def age_strong(age):
@@ -31,7 +35,7 @@ if __name__ == "__main__":
 
     # --- PHASE 1: GENERALIZATION STEPS ---
     steps_config = [
-        ("1. Raw", None, None), # Shortened labels for better fit
+        ("1. Raw", None, None), 
         ("2. Country", 'native-country', lambda x: "US" if x.strip() == "United-States" else "Non-US"),
         ("3. Marital", 'marital-status', lambda x: "Married" if x.strip().startswith("Married") else "Single"),
         ("4. Race", 'race', lambda x: "White" if x.strip() == "White" else "Other"),
@@ -65,24 +69,27 @@ if __name__ == "__main__":
     values_k = [x['k'] for x in history]
 
     sns.set_theme(style="white")
-    fig, ax1 = plt.subplots(figsize=(14, 9)) # Increased height
+    fig, ax1 = plt.subplots(figsize=(14, 9))
     ax1.grid(axis='y', linestyle='--', alpha=0.5, color='gray', zorder=0)
 
     # --- AXIS 1: RISK (Red Bars) ---
     palette = sns.color_palette("Reds_r", n_colors=len(steps))
-    bars = ax1.bar(steps, values_uniques, color=palette, alpha=0.8, zorder=2, width=0.5)
+    bars = ax1.bar(steps, values_uniques, color=palette, alpha=0.9, zorder=2, width=0.5)
     
     ax1.set_ylabel('Unique Records (Risk)', fontsize=14, fontweight='bold', color='#c0392b')
     ax1.tick_params(axis='y', labelsize=12, colors='#c0392b')
-    # Give plenty of headroom for the text
-    ax1.set_ylim(0, max(values_uniques) * 1.2)
+    ax1.set_ylim(0, max(values_uniques) * 1.15)
 
-    # Label Bars (Placed slightly above the bar)
+    # --- WHITE LABELS INSIDE BARS (BOTTOM) ---
     for bar in bars:
         height = bar.get_height()
         if height > 0:
-            ax1.text(bar.get_x() + bar.get_width()/2., height + (max(values_uniques)*0.02),
-                    f'{int(height)}', ha='center', va='bottom', fontsize=12, fontweight='bold', color='#444444')
+            label_y = 50 if height > 100 else height / 2
+            
+            ax1.text(bar.get_x() + bar.get_width()/2., label_y, 
+                     f'{int(height)}', 
+                     ha='center', va='center', 
+                     fontsize=12, fontweight='bold', color='white', zorder=4)
 
     # --- AXIS 2: SAFETY (Blue Line) ---
     ax2 = ax1.twinx()
@@ -90,25 +97,23 @@ if __name__ == "__main__":
     
     ax2.set_ylabel('K-Value (Safety)', fontsize=14, fontweight='bold', color='#2980b9')
     ax2.tick_params(axis='y', labelsize=12, colors='#2980b9')
-    # Massive headroom for the K labels so they don't touch the bars
-    ax2.set_ylim(0, max(values_k) * 1.5) 
+    ax2.set_ylim(0, 22)
+    ax2.set_yticks([0, 5, 10, 15, 20])
 
-    # Label Line points (Placed WAY above the point)
+    # --- BLUE LABELS (STANDARD POSITION) ---
     for i, v in enumerate(values_k):
-        # Offset calculation to push label up
-        offset = max(values_k) * 0.08 
-        ax2.text(i, v + offset, f'k={v}', 
-                 ha='center', va='bottom', fontsize=12, fontweight='bold', color='#2980b9', 
+        ax2.text(i, v + 0.8, f'k={v}', 
+                 ha='center', va='bottom', fontsize=11, fontweight='bold', color='#2980b9', 
                  bbox=dict(facecolor='white', edgecolor='#2980b9', boxstyle='round,pad=0.2', alpha=0.9))
 
     # Titles and Layout
     plt.title('Anonymization Process: Risk Reduction vs K-Anonymity Increase', fontsize=18, fontweight='bold', pad=20)
     
-    # NO ROTATION for X labels
-    ax1.set_xticklabels(steps, fontsize=11, fontweight='bold') 
+    ax1.set_xticks(range(len(steps)))
+    ax1.set_xticklabels(steps, fontsize=11, fontweight='bold')
     
     plt.tight_layout()
     
     out_path = os.path.join(current_dir, "../data/k_anonimity_chart.png")
     plt.savefig(out_path, dpi=300)
-    print(f"✅ Chart saved to: {out_path}")
+    print(f"Chart saved to: {out_path}")

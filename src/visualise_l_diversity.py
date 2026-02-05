@@ -98,8 +98,10 @@ if __name__ == "__main__":
         if val == 1: new_labels.append("l=1\n(Critical Risk)")
         elif val == 2: new_labels.append(f"l={val}\n(Min Safe)")
         else: new_labels.append(f"l={val}")
-            
+    
+    ax.set_xticks(ax.get_xticks())
     ax.set_xticklabels(new_labels, fontsize=11, fontweight='bold')
+    
     ax.set_title("L-Diversity Analysis: Risk Elimination", fontsize=16, fontweight='bold', pad=15)
     ax.set_xlabel("")
     ax.set_ylabel("Number of Groups", fontsize=12, fontweight='bold')
