@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import sys
 
 # CONFIGURATION
 # Relative path to the raw file
@@ -32,12 +33,17 @@ def analyze_k_anonymity(df, qi_list):
     return k_val, groups, rows_at_risk_1
 
 if __name__ == "__main__":
-    print("--- RISK ANALYZER ENGINE ---")
+    print("\n🕵️  --- RISK ANALYZER ENGINE ---")
     df = load_data()
     if df is not None:
+        print(f"[*] Loaded dataset with {len(df)} rows.")
         k, grouped_df, risk_count = analyze_k_anonymity(df, QUASI_IDENTIFIERS)
-        print(f"✅ ANALYSIS COMPLETED")
-        print(f"👉 Current k-anonymity: {k}")
+        
+        print(f"\n📊 RISK REPORT:")
+        print(f"   Current k-anonymity: {k}")
+        
         if k == 1:
             print(f"⚠️  CRITICAL RISK: {risk_count} unique records found.")
             print("   These individuals are re-identifiable with 100% probability.")
+        else:
+            print(f"✅ DATA IS SAFE (k={k})")

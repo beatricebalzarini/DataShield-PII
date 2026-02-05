@@ -27,15 +27,15 @@ def generalize_age_group(age):
 
 def anonymize_dataset(df):
     df_anon = df.copy()
-    print("[*] Generalizing Age...")
+    print("   🔹 Generalizing Age...")
     df_anon['age'] = df_anon['age'].apply(generalize_age_group)
-    print("[*] Generalizing Native Country...")
+    print("   🔹 Generalizing Native Country...")
     df_anon['native-country'] = df_anon['native-country'].apply(lambda x: "US" if str(x).strip() == "United-States" else "Non-US")
-    print("[*] Generalizing Marital Status...")
+    print("   🔹 Generalizing Marital Status...")
     df_anon['marital-status'] = df_anon['marital-status'].apply(lambda x: "Married" if str(x).strip().startswith("Married") else "Single")
-    print("[*] Generalizing Race...")
+    print("   🔹 Generalizing Race...")
     df_anon['race'] = df_anon['race'].apply(lambda x: "White" if str(x).strip() == "White" else "Other")
-    print("[*] Masking Sex...")
+    print("   🔹 Masking Sex...")
     df_anon['sex'] = "Person"
     return df_anon
 
@@ -51,23 +51,24 @@ def enforce_l_diversity(df, qi_list, sensitive_col, min_l=2):
     df_safe = df_safe.drop(columns=['l_score'])
     
     dropped = initial_count - len(df_safe)
-    print(f"   ⚠️  SUPPRESSION: Dropped {dropped} rows ({dropped/initial_count:.1%}).")
+    print(f"   ✂️  SUPPRESSION: Dropped {dropped} rows ({dropped/initial_count:.1%}).")
     return df_safe
 
 if __name__ == "__main__":
-    print("--- ANONYMIZER ENGINE ---")
+    print("\n🎭 --- ANONYMIZER ENGINE ---")
     df = load_data()
     if df is not None:
         df = df.astype(str)
 
         # 1. GENERALIZATION
+        print("[*] Applying Generalization Hierarchies:")
         df_gen = anonymize_dataset(df)
         
-        # 2. SAVE INTERMEDIATE (To visualize l-diversity risk later)
+        # 2. SAVE INTERMEDIATE
         df_gen.to_csv(INTERMEDIATE_PATH, index=False, header=False)
-        print(f"💾 Intermediate file saved: {INTERMEDIATE_PATH}")
+        print(f"💾 Saved intermediate file (Pre-Suppression): {INTERMEDIATE_PATH}")
 
-        # 3. SUPPRESSION (Fixing l-diversity)
+        # 3. SUPPRESSION
         df_final = enforce_l_diversity(df_gen, QUASI_IDENTIFIERS, SENSITIVE_ATTRIBUTE, min_l=2)
         
         # 4. FINAL CHECK & SAVE
@@ -75,4 +76,4 @@ if __name__ == "__main__":
         print(f"✅ FINAL k-anonymity: {k_final}")
         
         df_final.to_csv(FINAL_PATH, index=False, header=False)
-        print(f"💾 Final file saved: {FINAL_PATH}")
+        print(f"💾 Saved final anonymized file: {FINAL_PATH}")

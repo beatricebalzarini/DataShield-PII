@@ -11,9 +11,9 @@ sys.path.append(current_dir)
 try:
     from risk_analyser import load_data, analyze_k_anonymity, QUASI_IDENTIFIERS
 except ImportError:
-    sys.exit("Error: risk_analyser.py not found.")
+    sys.exit("❌ Error: risk_analyser.py not found.")
 
-# --- TRANSFORMATION LOGIC ---
+# --- TRANSFORMATION LOGIC (For Visualization) ---
 def age_strong(age):
     age = int(age)
     if age < 30: return "<30"
@@ -26,7 +26,7 @@ def get_stats(df, qi_list):
     return risk_count_1, k
 
 if __name__ == "__main__":
-    print("--- VISUALIZING K-ANONYMITY PROCESS ---")
+    print("\n📉 --- VISUALIZING K-ANONYMITY PROCESS ---")
     df = load_data()
     if df is None: sys.exit(1)
     
@@ -43,8 +43,8 @@ if __name__ == "__main__":
         ("6. Sex", 'sex', lambda x: "Person")
     ]
 
+    print("[*] Simulating anonymization steps for plotting...")
     for label, col, func in steps_config:
-        print(f"Running step: {label}...")
         if col and func:
             if col == 'age': 
                 df_current[col] = df['age'].apply(func) 
@@ -52,18 +52,20 @@ if __name__ == "__main__":
                 df_current[col] = df_current[col].apply(func)
         
         uniques, k = get_stats(df_current, QUASI_IDENTIFIERS)
+        print(f"   👉 {label:<15} | Uniques: {uniques:<5} | k: {k}")
         history.append({"Step": label, "Uniques": uniques, "k": k})
 
     # --- PHASE 2: SUPPRESSION ---
-    print("7. Applying Suppression...")
     SENSITIVE = "income"
     df_current['l_score'] = df_current.groupby(QUASI_IDENTIFIERS)[SENSITIVE].transform('nunique')
     df_suppressed = df_current[df_current['l_score'] >= 2].copy()
     
     uniques, k = get_stats(df_suppressed, QUASI_IDENTIFIERS)
+    print(f"   👉 {'7. Suppression':<15} | Uniques: {uniques:<5} | k: {k}")
     history.append({"Step": "7. Suppression", "Uniques": uniques, "k": k})
 
     # --- PLOTTING ---
+    print("[*] Rendering chart...")
     steps = [x['Step'] for x in history]
     values_uniques = [x['Uniques'] for x in history]
     values_k = [x['k'] for x in history]
@@ -72,7 +74,7 @@ if __name__ == "__main__":
     fig, ax1 = plt.subplots(figsize=(14, 9))
     ax1.grid(axis='y', linestyle='--', alpha=0.5, color='gray', zorder=0)
 
-    # --- AXIS 1: RISK (Red Bars) ---
+    # Risk Bars
     palette = sns.color_palette("Reds_r", n_colors=len(steps))
     bars = ax1.bar(steps, values_uniques, color=palette, alpha=0.9, zorder=2, width=0.5)
     
@@ -80,18 +82,14 @@ if __name__ == "__main__":
     ax1.tick_params(axis='y', labelsize=12, colors='#c0392b')
     ax1.set_ylim(0, max(values_uniques) * 1.15)
 
-    # --- WHITE LABELS INSIDE BARS (BOTTOM) ---
     for bar in bars:
         height = bar.get_height()
         if height > 0:
             label_y = 50 if height > 100 else height / 2
-            
-            ax1.text(bar.get_x() + bar.get_width()/2., label_y, 
-                     f'{int(height)}', 
-                     ha='center', va='center', 
-                     fontsize=12, fontweight='bold', color='white', zorder=4)
+            ax1.text(bar.get_x() + bar.get_width()/2., label_y, f'{int(height)}', 
+                     ha='center', va='center', fontsize=12, fontweight='bold', color='white', zorder=4)
 
-    # --- AXIS 2: SAFETY (Blue Line) ---
+    # Safety Line
     ax2 = ax1.twinx()
     ax2.plot(steps, values_k, color='#2980b9', marker='o', linestyle='-', linewidth=3, markersize=10, zorder=3)
     
@@ -100,7 +98,6 @@ if __name__ == "__main__":
     ax2.set_ylim(0, 22)
     ax2.set_yticks([0, 5, 10, 15, 20])
 
-    # --- BLUE LABELS (STANDARD POSITION) ---
     for i, v in enumerate(values_k):
         ax2.text(i, v + 0.8, f'k={v}', 
                  ha='center', va='bottom', fontsize=11, fontweight='bold', color='#2980b9', 
@@ -108,12 +105,10 @@ if __name__ == "__main__":
 
     # Titles and Layout
     plt.title('Anonymization Process: Risk Reduction vs K-Anonymity Increase', fontsize=18, fontweight='bold', pad=20)
-    
     ax1.set_xticks(range(len(steps)))
     ax1.set_xticklabels(steps, fontsize=11, fontweight='bold')
     
     plt.tight_layout()
-    
     out_path = os.path.join(current_dir, "../data/k_anonimity_chart.png")
     plt.savefig(out_path, dpi=300)
-    print(f"Chart saved to: {out_path}")
+    print(f"✅ Chart saved to: {out_path}")
